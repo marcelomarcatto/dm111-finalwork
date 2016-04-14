@@ -6,6 +6,7 @@ import java.util.Date;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.br.CPF;
 
 
 public class User implements Principal {
@@ -27,6 +28,7 @@ public class User implements Principal {
 	@NotNull
 	private String role;
 	
+	@CPF
 	private String cpf;
 	
 	private String customerId;

@@ -1,10 +1,8 @@
 package br.inatel.t124.dm111.finalwork.services;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -40,7 +38,6 @@ import br.inatel.t124.dm111.finalwork.models.User;
 @Path("/users")
 public class UserManager {
 	
-	private static final Logger log = Logger.getLogger("UserManager");
 	
 	public static final String USER_KIND = "Users"; 
 	
@@ -59,7 +56,8 @@ public class UserManager {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@RolesAllowed({"ADMIN"})
+	@PermitAll
+//	@RolesAllowed({"ADMIN"})
 	public List<User> getList() {
 
 		List<User> users = new ArrayList<>();
@@ -83,11 +81,7 @@ public class UserManager {
 	public User get(@PathParam(PROP_EMAIL) String email) {
 
 		if (securityContext.getUserPrincipal().getName().equals(email) || securityContext.isUserInRole("ADMIN")) {
-			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-
-			Filter emailFilter = new FilterPredicate(PROP_EMAIL, FilterOperator.EQUAL, email);
-			Query query = new Query(USER_KIND).setFilter(emailFilter);
-			Entity userEntity = datastore.prepare(query).asSingleEntity();
+			Entity userEntity = getByEmail(email);
 			
 			if (userEntity != null) {
 				User user = entityToUser(userEntity);
@@ -107,8 +101,8 @@ public class UserManager {
 	public User insert(@Valid User user) {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-		if (!checkIfEmailExist(user)) {
-			if (!checkIfCpfExist(user)) {
+		if (getByEmail(user.getEmail()) == null) {
+			if (getByCPF(user.getCpf()) == null) {
 				if (!securityContext.isUserInRole("ADMIN")) {
 					user.setRole("USER");
 				}
@@ -141,18 +135,17 @@ public class UserManager {
 	@RolesAllowed({"ADMIN", "USER"})
 	public User update(@PathParam("email") String email, @Valid User user) {
 		if (user.getId() != 0) {
+
 			if (securityContext.getUserPrincipal().getName().equals(email) || securityContext.isUserInRole("ADMIN")) {
-				if (!checkIfEmailExist(user)) {
-					if (!checkIfCpfExist(user)) {
+				Entity userEntity = getByEmail(user.getEmail());
+				if (userEntity != null) {
+					if (!userEntity.getProperty(PROP_EMAIL).equals(email)) {
 
-						DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+						Entity cpfUserEntity = getByCPF(user.getCpf());
+						if (cpfUserEntity == null || cpfUserEntity.getProperty(PROP_CPF).equals(user.getCpf())) {
 
-						Filter emailFilter = new FilterPredicate(PROP_EMAIL, FilterOperator.EQUAL, email);
+							DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-						Query query = new Query(USER_KIND).setFilter(emailFilter);
-						Entity userEntity = datastore.prepare(query).asSingleEntity();
-
-						if (userEntity != null) {
 							userToEntity(user, userEntity);
 
 							if (!securityContext.isUserInRole("ADMIN")) {
@@ -161,16 +154,18 @@ public class UserManager {
 							datastore.put(userEntity);
 
 							return user;
+
 						} else {
-							throw new WebApplicationException(Status.NOT_FOUND);
+							throw new WebApplicationException("An user with CPF " + user.getCpf() + " already exists.",
+									Status.BAD_REQUEST);
 						}
 					} else {
-						throw new WebApplicationException("An user with CPF " + user.getCpf() + " already exists.",
+						throw new WebApplicationException("An user with email " + user.getEmail() + " already exists.",
 								Status.BAD_REQUEST);
 					}
 				} else {
-					throw new WebApplicationException("An user with email " + user.getEmail() + " already exists.",
-							Status.BAD_REQUEST);
+					throw new WebApplicationException(Status.NOT_FOUND);
+					
 				}
 			} else {
 				throw new WebApplicationException(Status.FORBIDDEN);
@@ -184,62 +179,38 @@ public class UserManager {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{cpf}")
 	@RolesAllowed({"ADMIN", "USER"})
-	public User delete(@PathParam("cpf") String email) {
-
-		if (securityContext.getUserPrincipal().getName().equals(email) || securityContext.isUserInRole("ADMIN")) {
-			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		
-			Filter emailFilter = new FilterPredicate(PROP_CPF, FilterOperator.EQUAL, email);
-			Query query = new Query(USER_KIND).setFilter(emailFilter);
-		
-			Entity userEntity = datastore.prepare(query).asSingleEntity();				
-			if (userEntity != null) {
+	public User delete(@PathParam("cpf") String cpf) {
+		Entity userEntity = getByCPF(cpf);
+		if (userEntity != null) {
+			if (securityContext.getUserPrincipal().getName().equals(userEntity.getProperty(PROP_CPF))
+					|| securityContext.isUserInRole("ADMIN")) {
+				DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 				datastore.delete(userEntity.getKey());
 				User user = entityToUser(userEntity);
-				
+
 				return user;
-			} else {	
-				throw new WebApplicationException(Status.NOT_FOUND);			
+			} else {
+				throw new WebApplicationException(Status.FORBIDDEN);
 			}
 		} else {
-			throw new WebApplicationException(Status.FORBIDDEN);
-		}			
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
 	}
 
-	private boolean checkIfEmailExist (User user) {		
+	private Entity getByEmail(String email) {		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Filter emailFilter = new FilterPredicate(PROP_EMAIL, FilterOperator.EQUAL, user.getEmail());
+		Filter emailFilter = new FilterPredicate(PROP_EMAIL, FilterOperator.EQUAL, email);
 		
 		Query query = new Query(USER_KIND).setFilter(emailFilter);
-		Entity userEntity = datastore.prepare(query).asSingleEntity();
-	
-		if (userEntity == null) {
-			return false;
-		} else {
-			if (userEntity.getKey().getId() == user.getId()) {
-				return false;
-			} else {				
-				return true;
-			}				
-		}
+		return datastore.prepare(query).asSingleEntity();
 	}
 	
-	private boolean checkIfCpfExist (User user) {		
+	private Entity getByCPF(String cpf) {		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Filter emailFilter = new FilterPredicate(PROP_CPF, FilterOperator.EQUAL, user.getCpf());
+		Filter emailFilter = new FilterPredicate(PROP_CPF, FilterOperator.EQUAL, cpf);
 		
 		Query query = new Query(USER_KIND).setFilter(emailFilter);
-		Entity userEntity = datastore.prepare(query).asSingleEntity();
-	
-		if (userEntity == null) {
-			return false;
-		} else {
-			if (userEntity.getKey().getId() == user.getId()) {
-				return false;
-			} else {				
-				return true;
-			}				
-		}
+		return datastore.prepare(query).asSingleEntity();
 	}
 
 	public static User entityToUser (Entity userEntity) {
@@ -251,6 +222,9 @@ public class UserManager {
 		user.setLastLogin((Date) userEntity.getProperty(PROP_LAST_LOGIN));
 		user.setLastGCMRegister((Date) userEntity.getProperty(PROP_LAST_GCM_REGISTER));
 		user.setRole((String) userEntity.getProperty(PROP_ROLE));
+		user.setCpf((String) userEntity.getProperty(PROP_CPF));
+		user.setCustomerId((String) userEntity.getProperty(PROP_CUSTOMER_ID));
+		user.setCustomerCRMId((String) userEntity.getProperty(PROP_CUSTOMER_CRM_ID));
 		
 		return user;
 	}
@@ -262,7 +236,8 @@ public class UserManager {
 		userEntity.setProperty(PROP_LAST_LOGIN, user.getLastLogin());
 		userEntity.setProperty(PROP_LAST_GCM_REGISTER, user.getLastGCMRegister());
 		userEntity.setProperty(PROP_ROLE, user.getRole());
+		userEntity.setProperty(PROP_CPF, user.getCpf());
+		userEntity.setProperty(PROP_CUSTOMER_ID, user.getCustomerId());
+		userEntity.setProperty(PROP_CUSTOMER_CRM_ID, user.getCustomerCRMId());
 	}
-
-
 }
