@@ -2,42 +2,40 @@ package br.inatel.t124.dm111.finalwork.models;
 
 import java.io.Serializable;
 
-public class Order implements Serializable{
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.br.CPF;
+
+public class OrderStatus implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	
-	private long id;
+	@NotNull
+	private String userId;
 	
-	private String customerId;
+	@CPF
+	private String userCpf;
 	
-	private String customerCpf;
-	
+	@NotNull
 	private String justification;
 	
+	@NotNull
 	private String orderStatus;
 
-	public long getId() {
-		return id;
+	public String getUserId() {
+		return userId;
 	}
 
-	public void setId(long id) {
-		this.id = id;
+	public void setUserId(String customerId) {
+		this.userId = customerId;
 	}
 
-	public String getCustomerId() {
-		return customerId;
+	public String getUserCpf() {
+		return userCpf;
 	}
 
-	public void setCustomerId(String customerId) {
-		this.customerId = customerId;
-	}
-
-	public String getCustomerCpf() {
-		return customerCpf;
-	}
-
-	public void setCustomerCpf(String customerCpf) {
-		this.customerCpf = customerCpf;
+	public void setUserCpf(String customerCpf) {
+		this.userCpf = customerCpf;
 	}
 
 	public String getJustification() {

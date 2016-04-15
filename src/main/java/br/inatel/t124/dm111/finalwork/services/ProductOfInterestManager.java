@@ -7,6 +7,7 @@ import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -33,116 +34,80 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Query.SortDirection;
 
+import br.inatel.t124.dm111.finalwork.models.ProductOfInterest;
 import br.inatel.t124.dm111.finalwork.models.User;
 
-@Path("/users")
-public class UserManager {
+@Path("/productsOfInterest")
+public class ProductOfInterestManager {
 	
 	
-	public static final String USER_KIND = "Users"; 
+	public static final String PRODUCTS_INTEREST_KIND = "ProductsOfInterest"; 
 	
-	public static final String PROP_EMAIL = "email";
-	public static final String PROP_PASSWORD = "password";
-	public static final String PROP_GCM_REG_ID = "gcmRegId";
-	public static final String PROP_LAST_LOGIN = "lastLogin";
-	public static final String PROP_LAST_GCM_REGISTER = "lastGCMRegister";
-	public static final String PROP_ROLE = "role";
 	public static final String PROP_CPF = "cpf";
 	public static final String PROP_CUSTOMER_ID = "customerId";
-	public static final String PROP_CUSTOMER_CRM_ID = "customerCRMId";
+	public static final String PROP_PRODUCT_ID = "productId";
+	public static final String PROP_TRIGGER_PRICE = "triggerPrice";
 	
 	@Context
-	private SecurityContext securityContext;
+	SecurityContext securityContext;
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@RolesAllowed({"ADMIN"})
-	public List<User> getList() {
+	@RolesAllowed({"ADMIN, USER"})
+	public List<ProductOfInterest> getList() {
 
-		List<User> users = new ArrayList<>();
+		// TODO : validate current user
+
+		List<ProductOfInterest> productsOfInterest = new ArrayList<>();
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-		Query query = new Query(USER_KIND).addSort(PROP_EMAIL, SortDirection.ASCENDING);
-		List<Entity> userEntities = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
+		Query query = new Query(PRODUCTS_INTEREST_KIND).addSort(PROP_CPF, SortDirection.ASCENDING);
+		List<Entity> poiEntities = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
 
-		for (Entity userEntity : userEntities) {
-			User user = entityToUser(userEntity);	
-			users.add(user);
-		}
-		
-		return users;
-	}
-
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@RolesAllowed({"ADMIN", "USER"})
-	@Path("/{email}")
-	public User get(@PathParam(PROP_EMAIL) String email) {
-
-		if (securityContext.getUserPrincipal().getName().equals(email) || securityContext.isUserInRole("ADMIN")) {
-			Entity userEntity = getByEmail(email);
-			
-			if (userEntity != null) {
-				User user = entityToUser(userEntity);
-				return user;
-			} else {
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}			
-		} else {
-			throw new WebApplicationException(Status.FORBIDDEN);
-		}
-	}
-	
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@RolesAllowed({"ADMIN", "USER"})
-	@Path("getByCpf/{cpf}")
-	public User searchByCPF(@PathParam(PROP_CPF) String cpf) {
-
-		Entity userEntity = getByCPF(cpf);
-
-		if (userEntity != null) {
-			if (securityContext.getUserPrincipal().getName().equals(userEntity.getProperty(PROP_EMAIL))
-					|| securityContext.isUserInRole("ADMIN")) {
-				User user = entityToUser(userEntity);
-				return user;
-			} else {
-				throw new WebApplicationException(Status.FORBIDDEN);
+		if (poiEntities != null) {
+			for (Entity poiEntity : poiEntities) {
+				ProductOfInterest productOfInterest = entityToProductOfInterest(poiEntity);
+				productsOfInterest.add(productOfInterest);
 			}
 		} else {
 			throw new WebApplicationException(Status.NOT_FOUND);
 		}
+
+		return productsOfInterest;
 	}
 
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@PermitAll
-	public User insert(@Valid User user) {
+	public ProductOfInterest insert(@Valid ProductOfInterest productOfInterest) {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-		if (getByEmail(user.getEmail()) == null) {
-			if (getByCPF(user.getCpf()) == null) {
+		if (getByEmail(productOfInterest.getEmail()) == null) {
+			if (getByCPF(productOfInterest.getCpf()) == null) {
 				if (!securityContext.isUserInRole("ADMIN")) {
-					user.setRole("USER");
+					productOfInterest.setRole("USER");
 				}
-				Key userKey = KeyFactory.createKey(USER_KIND, "userKey");
-				Entity userEntity = new Entity(USER_KIND, userKey);
+				Key userKey = KeyFactory.createKey(PRODUCTS_INTEREST_KIND, "userKey");
+				Entity userEntity = new Entity(PRODUCTS_INTEREST_KIND, userKey);
 
-				userToEntity(user, userEntity);
+				productOfInterest.setGcmRegId("");
+				productOfInterest.setLastGCMRegister(null);
+				productOfInterest.setLastLogin(null);
+				productOfInterestToEntity(productOfInterest, userEntity);
 
 				datastore.put(userEntity);
-				user.setId(userEntity.getKey().getId());
+				productOfInterest.setId(userEntity.getKey().getId());
 			} else {
-				throw new WebApplicationException("An user with CPF " + user.getCpf() + " already exists.",
+				throw new WebApplicationException("An user with CPF " + productOfInterest.getCpf() + " already exists.",
 						Status.BAD_REQUEST);
 			}
 		} else {
-			throw new WebApplicationException("An user with email " + user.getEmail() + " already exists.",
+			throw new WebApplicationException("An user with email " + productOfInterest.getEmail() + " already exists.",
 					Status.BAD_REQUEST);
 		}
 		
-		return user;
+		return productOfInterest;
 	}
 
 	@PUT
@@ -163,7 +128,7 @@ public class UserManager {
 
 							DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-							userToEntity(user, userEntity);
+							productOfInterestToEntity(user, userEntity);
 
 							if (!securityContext.isUserInRole("ADMIN")) {
 								user.setRole("USER");
@@ -203,7 +168,7 @@ public class UserManager {
 					|| securityContext.isUserInRole("ADMIN")) {
 				DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 				datastore.delete(userEntity.getKey());
-				User user = entityToUser(userEntity);
+				User user = entityToProductOfInterest(userEntity);
 
 				return user;
 			} else {
@@ -218,43 +183,33 @@ public class UserManager {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Filter emailFilter = new FilterPredicate(PROP_EMAIL, FilterOperator.EQUAL, email);
 		
-		Query query = new Query(USER_KIND).setFilter(emailFilter);
+		Query query = new Query(PRODUCTS_INTEREST_KIND).setFilter(emailFilter);
 		return datastore.prepare(query).asSingleEntity();
 	}
 	
 	private Entity getByCPF(String cpf) {		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Filter cpfFilter = new FilterPredicate(PROP_CPF, FilterOperator.EQUAL, cpf);
+		Filter emailFilter = new FilterPredicate(PROP_CPF, FilterOperator.EQUAL, cpf);
 		
-		Query query = new Query(USER_KIND).setFilter(cpfFilter);
+		Query query = new Query(PRODUCTS_INTEREST_KIND).setFilter(emailFilter);
 		return datastore.prepare(query).asSingleEntity();
 	}
 
-	public static User entityToUser (Entity userEntity) {
-		User user = new User();
-		user.setId(userEntity.getKey().getId());
-		user.setEmail((String) userEntity.getProperty(PROP_EMAIL));
-		user.setPassword((String) userEntity.getProperty(PROP_PASSWORD));
-		user.setGcmRegId((String) userEntity.getProperty(PROP_GCM_REG_ID));
-		user.setLastLogin((Date) userEntity.getProperty(PROP_LAST_LOGIN));
-		user.setLastGCMRegister((Date) userEntity.getProperty(PROP_LAST_GCM_REGISTER));
-		user.setRole((String) userEntity.getProperty(PROP_ROLE));
-		user.setCpf((String) userEntity.getProperty(PROP_CPF));
-		user.setCustomerId((String) userEntity.getProperty(PROP_CUSTOMER_ID));
-		user.setCustomerCRMId((String) userEntity.getProperty(PROP_CUSTOMER_CRM_ID));
+	public static ProductOfInterest entityToProductOfInterest(Entity poiEntity) {
+		ProductOfInterest productOfInterest = new ProductOfInterest();
+		productOfInterest.setId(poiEntity.getKey().getId());
+		productOfInterest.setCpf((String) poiEntity.getProperty(PROP_CPF));
+		productOfInterest.setCustomerId((String) poiEntity.getProperty(PROP_CUSTOMER_ID));
+		productOfInterest.setProductId((String) poiEntity.getProperty(PROP_PRODUCT_ID));
+		productOfInterest.setTriggerPrice((float) poiEntity.getProperty(PROP_TRIGGER_PRICE));
 		
-		return user;
+		return productOfInterest;
 	}
 
-	private void userToEntity (User user, Entity userEntity) {
-		userEntity.setProperty(PROP_EMAIL, user.getEmail());
-		userEntity.setProperty(PROP_PASSWORD, user.getPassword());
-		userEntity.setProperty(PROP_GCM_REG_ID, user.getGcmRegId());
-		userEntity.setProperty(PROP_LAST_LOGIN, user.getLastLogin());
-		userEntity.setProperty(PROP_LAST_GCM_REGISTER, user.getLastGCMRegister());
-		userEntity.setProperty(PROP_ROLE, user.getRole());
-		userEntity.setProperty(PROP_CPF, user.getCpf());
-		userEntity.setProperty(PROP_CUSTOMER_ID, user.getCustomerId());
-		userEntity.setProperty(PROP_CUSTOMER_CRM_ID, user.getCustomerCRMId());
+	private void productOfInterestToEntity (ProductOfInterest productOfInterest, Entity poiEntity) {
+		poiEntity.setProperty(PROP_CPF, productOfInterest.getCpf());
+		poiEntity.setProperty(PROP_CUSTOMER_ID, productOfInterest.getCustomerId());
+		poiEntity.setProperty(PROP_PRODUCT_ID, productOfInterest.getProductId());
+		poiEntity.setProperty(PROP_TRIGGER_PRICE, productOfInterest.getTriggerPrice());
 	}
 }

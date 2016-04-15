@@ -2,24 +2,42 @@ package br.inatel.t124.dm111.finalwork.models;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.br.CPF;
+
 public class ProductOfInterest implements Serializable {
 	
 	private static final long serialVersionUID = -8280977957503510248L;
-
-	private String customerCPF;
 	
+	private Long id;
+
+	@CPF
+	private String cpf;
+	
+	@NotNull
 	private String customerId;
 	
+	@NotNull
 	private String productId;
 	
+	@NotNull
 	private float triggerPrice;
 
-	public String getCustomerCPF() {
-		return customerCPF;
+	public Long getId() {
+		return id;
 	}
 
-	public void setCustomerCPF(String customerCPF) {
-		this.customerCPF = customerCPF;
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getCpf() {
+		return cpf;
+	}
+
+	public void setCpf(String customerCPF) {
+		this.cpf = customerCPF;
 	}
 
 	public String getCustomerId() {
