@@ -28,7 +28,7 @@ public class User implements Principal {
 	@NotNull
 	private String role;
 	
-	@CPF
+	@NotNull
 	private String cpf;
 	
 	private String customerId;

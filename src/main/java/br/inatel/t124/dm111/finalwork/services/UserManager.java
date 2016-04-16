@@ -110,7 +110,11 @@ public class UserManager {
 				throw new WebApplicationException(Status.FORBIDDEN);
 			}
 		} else {
-			throw new WebApplicationException(Status.NOT_FOUND);
+			if (securityContext.isUserInRole("ADMIN")) {
+				throw new WebApplicationException(Status.NOT_FOUND);
+			} else {
+				throw new WebApplicationException(Status.FORBIDDEN);
+			}
 		}
 	}
 
@@ -182,7 +186,6 @@ public class UserManager {
 					}
 				} else {
 					throw new WebApplicationException(Status.NOT_FOUND);
-					
 				}
 			} else {
 				throw new WebApplicationException(Status.FORBIDDEN);
@@ -210,7 +213,11 @@ public class UserManager {
 				throw new WebApplicationException(Status.FORBIDDEN);
 			}
 		} else {
-			throw new WebApplicationException(Status.NOT_FOUND);
+			if (securityContext.isUserInRole("ADMIN")) {
+				throw new WebApplicationException(Status.NOT_FOUND);
+			} else {
+				throw new WebApplicationException(Status.FORBIDDEN);
+			}
 		}
 	}
 

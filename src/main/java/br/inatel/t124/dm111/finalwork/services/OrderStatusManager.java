@@ -44,7 +44,7 @@ public class OrderStatusManager {
 	@RolesAllowed({"ADMIN"})
 	public String send(@Valid OrderStatus orderStatus) {
 		
-		User user = getUserByCPF(orderStatus.getUserCpf());
+		User user = getUserByCPF(orderStatus.getCpf());
 		
 		Sender sender = new Sender("AIzaSyCkVGqGPF00ueJnDXVPvj_JAEMJZmwr4eY");	
 		Gson gson = new Gson();

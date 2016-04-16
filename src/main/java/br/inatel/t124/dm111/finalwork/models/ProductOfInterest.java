@@ -4,15 +4,13 @@ import java.io.Serializable;
 
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.validator.constraints.br.CPF;
-
 public class ProductOfInterest implements Serializable {
 	
-	private static final long serialVersionUID = -8280977957503510248L;
+	private static final long serialVersionUID = 1L;
 	
 	private Long id;
 
-	@CPF
+	@NotNull
 	private String cpf;
 	
 	@NotNull

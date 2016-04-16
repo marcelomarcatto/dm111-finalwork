@@ -14,7 +14,7 @@ public class OrderStatus implements Serializable{
 	private String userId;
 	
 	@CPF
-	private String userCpf;
+	private String cpf;
 	
 	@NotNull
 	private String justification;
@@ -30,12 +30,12 @@ public class OrderStatus implements Serializable{
 		this.userId = customerId;
 	}
 
-	public String getUserCpf() {
-		return userCpf;
+	public String getCpf() {
+		return cpf;
 	}
 
-	public void setUserCpf(String customerCpf) {
-		this.userCpf = customerCpf;
+	public void setCpf(String customerCpf) {
+		this.cpf = customerCpf;
 	}
 
 	public String getJustification() {
