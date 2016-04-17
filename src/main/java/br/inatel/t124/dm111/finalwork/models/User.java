@@ -6,7 +6,6 @@ import java.util.Date;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.br.CPF;
 
 
 public class User implements Principal {
@@ -25,7 +24,6 @@ public class User implements Principal {
 	
 	private Date lastGCMRegister;
 	
-	@NotNull
 	private String role;
 	
 	@NotNull
@@ -34,6 +32,8 @@ public class User implements Principal {
 	private String customerId;
 	
 	private String customerCRMId;
+	
+	private Date lastUpdate;
 
 	@Override
 	public String getName() {
@@ -118,6 +118,14 @@ public class User implements Principal {
 
 	public void setCustomerCRMId(String customerCRMId) {
 		this.customerCRMId = customerCRMId;
+	}
+
+	public Date getLastUpdate() {
+		return lastUpdate;
+	}
+
+	public void setLastUpdate(Date lastUpdate) {
+		this.lastUpdate = lastUpdate;
 	}
 
 }

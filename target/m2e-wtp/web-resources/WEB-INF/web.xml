@@ -27,24 +27,6 @@
 		<url-pattern>/api/*</url-pattern>
 	</servlet-mapping>
 
-	<!-- <servlet>
-		<servlet-name>CronServices</servlet-name>
-		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-		<init-param>
-			<param-name>jersey.config.server.provider.packages</param-name>
-			<param-value>com.siecola.exemplo1.cronservices</param-value>
-		</init-param>
-		<init-param>
-			<param-name>org.glassfish.jersey.api.json.POJOMappingFeature</param-name>
-			<param-value>true</param-value>
-		</init-param>
-        <load-on-startup>1</load-on-startup>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>CronServices</servlet-name>
-		<url-pattern>/cron/*</url-pattern>
-	</servlet-mapping>-->
-
 	<listener>
 	    <listener-class>br.inatel.t124.dm111.finalwork.InitServletContextClass</listener-class>
 	</listener>

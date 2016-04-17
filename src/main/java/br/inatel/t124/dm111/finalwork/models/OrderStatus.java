@@ -10,10 +10,9 @@ public class OrderStatus implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	
-	@NotNull
 	private String userId;
 	
-	@CPF
+	@NotNull
 	private String cpf;
 	
 	@NotNull

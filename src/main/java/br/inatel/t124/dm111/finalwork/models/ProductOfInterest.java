@@ -13,7 +13,6 @@ public class ProductOfInterest implements Serializable {
 	@NotNull
 	private String cpf;
 	
-	@NotNull
 	private String customerId;
 	
 	@NotNull

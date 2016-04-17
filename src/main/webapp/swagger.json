@@ -1,0 +1,433 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "DM111 Final Work",
+        "description": "Final work for the discipline Java with Google App Engine",
+        "version": "1.0.0"
+    },
+    "host": "mmm-dm111-finalwork.appspot.com",
+    "schemes": [
+        "http"
+    ],
+    "basePath": "/api",
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/users": {
+            "get": {
+                "summary": "Get users",
+                "description": "Retrieves saved users\n",
+                "tags": [
+                    "Users"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User found",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found."
+                    }
+                }
+            },
+            "post": {
+                "summary": "Post user",
+                "description": "Inserts a new user\n",
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User Json",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "400": {
+                        "description": "An error ocurred"
+                    }
+                }
+            }
+        },
+        "/users/{param}": {
+            "get": {
+                "summary": "Get users by email",
+                "description": "Retrieves one or more users\n",
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "param",
+                        "description": "User email",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User found",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found."
+                    }
+                }
+            },
+            "put": {
+                "summary": "Put user",
+                "description": "Updates an existing user\n",
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "param",
+                        "description": "User email",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "User Json",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "400": {
+                        "description": "An error ocurred"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete user",
+                "description": "Remove an existing user\n",
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "param",
+                        "description": "User cpf",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            }
+        },
+        "/users/getByCpf/{cpf}": {
+            "get": {
+                "summary": "Get a user by CPF",
+                "description": "Retrieves a user by CPF\n",
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cpf",
+                        "description": "User CPF",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User found",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found."
+                    }
+                }
+            }
+        },
+        "/orderStatus": {
+            "post": {
+                "summary": "Post order status",
+                "description": "Send order status to mobile users\n",
+                "tags": [
+                    "OrderStatus"
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "OrderStatus Json",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/OrderStatus"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                }
+            }
+        },
+        "/productsOfInterest": {
+            "post": {
+                "summary": "Post product of interest",
+                "description": "Inserts product of interest\n",
+                "tags": [
+                    "ProductsOfInterest"
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "ProductOfInterest Json",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ProductOfInterest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created",
+                        "schema": {
+                            "$ref": "#/definitions/ProductOfInterest"
+                        }
+                    }
+                }
+            }
+        },
+        "/productsOfInterest/{cpf}": {
+            "get": {
+                "summary": "Get products of interest",
+                "description": "Retrieves saved products of interest by CPF\n",
+                "tags": [
+                    "ProductsOfInterest"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cpf",
+                        "description": "User cpf",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Products or interest found",
+                        "schema": {
+                            "$ref": "#/definitions/ProductOfInterest"
+                        }
+                    },
+                    "404": {
+                        "description": "Products or interest not found."
+                    }
+                }
+            }
+        },
+        "/productsOfInterest/{param1}/{param2}": {
+            "delete": {
+                "summary": "Delete products of interest",
+                "description": "Deletes product of interest by product Id and CPF\n",
+                "tags": [
+                    "ProductsOfInterest"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "param1",
+                        "description": "User cpf",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "param2",
+                        "description": "productId",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Products or interest found",
+                        "schema": {
+                            "$ref": "#/definitions/ProductOfInterest"
+                        }
+                    },
+                    "404": {
+                        "description": "Products or interest not found"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Post product of interest notification",
+                "description": "Send price change notification of product of interest\n",
+                "tags": [
+                    "ProductsOfInterest"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "param1",
+                        "description": "Product Id that has price changed",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "path",
+                        "name": "param2",
+                        "description": "The new price of product",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created",
+                        "schema": {
+                            "$ref": "#/definitions/ProductOfInterest"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "User": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "User id on google cloud storage.",
+                    "type": "number"
+                },
+                "gcmRegId": {
+                    "description": "Google cloud messaging id.",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "User email. Must be unique.",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "User password.",
+                    "type": "string"
+                },
+                "lastLogin": {
+                    "description": "Last user login.",
+                    "type": "string"
+                },
+                "lastGCMRegister": {
+                    "description": "Last user google cloud messaging login.",
+                    "type": "string"
+                },
+                "lastUpdate": {
+                    "description": "Last user update date.",
+                    "type": "string"
+                },
+                "role": {
+                    "description": "User role. If not provided, the default user role will be set as USER.",
+                    "type": "string"
+                },
+                "cpf": {
+                    "description": "The user CPF. Must be unique.",
+                    "type": "string"
+                },
+                "customerId": {
+                    "description": "The user id on sales application.",
+                    "type": "string"
+                },
+                "customerCRMId": {
+                    "description": "The user id on CRM application.",
+                    "type": "string"
+                }
+            }
+        },
+        "OrderStatus": {
+            "type": "object",
+            "properties": {
+                "userId": {
+                    "description": "User id",
+                    "type": "string"
+                },
+                "cpf": {
+                    "description": "User CPF",
+                    "type": "string"
+                },
+                "justification": {
+                    "description": "Reason of status change",
+                    "type": "string"
+                },
+                "orderStatus": {
+                    "description": "New order status",
+                    "type": "string"
+                }
+            }
+        },
+        "ProductOfInterest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ProductOfInterest id",
+                    "type": "integer"
+                },
+                "cpf": {
+                    "description": "User CPF",
+                    "type": "string"
+                },
+                "customerId": {
+                    "description": "User id on sales application",
+                    "type": "string"
+                },
+                "triggerPrice": {
+                    "description": "Price that triggers users notifications",
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

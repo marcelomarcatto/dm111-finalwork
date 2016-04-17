@@ -1,10 +1,9 @@
 package br.inatel.t124.dm111.finalwork.authentication;
-
+		
 import java.lang.reflect.Method;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,15 +12,12 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.cache.Cache;
 import javax.cache.CacheException;
-import javax.cache.CacheFactory;
-import javax.cache.CacheManager;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.xml.bind.DatatypeConverter;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -31,16 +27,17 @@ import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 
+import br.inatel.t124.dm111.finalwork.TokenCacheManager;
 import br.inatel.t124.dm111.finalwork.models.User;
 import br.inatel.t124.dm111.finalwork.services.UserManager;
 
 public class AuthFilter implements ContainerRequestFilter {
-	
-	private static final String ACCESS_UNAUTHORIZED = "You don't have access to this resource"; 
 
+	private static final String ACCESS_UNAUTHORIZED = "Você não tem permissão para acessar esse recurso";
+	
     @Context
     private ResourceInfo resourceInfo;
-    
+        
 	@Override
 	public void filter(ContainerRequestContext requestContext) {
 		
@@ -58,83 +55,74 @@ public class AuthFilter implements ContainerRequestFilter {
 			return;
 		}
 
-		String[] loginPassword = decode(auth);
-
-		if (loginPassword == null || loginPassword.length != 2) {
-			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
-				    .entity(ACCESS_UNAUTHORIZED).build());
-			return;
-		}
-
+        String accessToken = auth.substring("Bearer ".length());        
+		
 		RolesAllowed rolesAllowed = method.getAnnotation(RolesAllowed.class);
 	    Set<String> rolesSet = new HashSet<String>(Arrays.asList(rolesAllowed.value()));
 
-	    if (checkCredentialsAndRoles (loginPassword[0], loginPassword[1], rolesSet, requestContext) == false) {
+	    if (checkCredentialsAndRoles (accessToken, rolesSet, requestContext) == false) {
 			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
 				    .entity(ACCESS_UNAUTHORIZED).build());
             return;	    	
 	    } 
 	}
 	
-	private boolean checkCredentialsAndRoles (String username, String password, Set<String> roles, ContainerRequestContext requestContext) {
+	private boolean checkCredentialsAndRoles (String accessToken, Set<String> roles, ContainerRequestContext requestContext) {
 		boolean isUserAllowed = false;
+		String email;
 		
-		DatastoreService datastore = DatastoreServiceFactory
-				.getDatastoreService();
+        try {
+        	Cache cache = TokenCacheManager.getInstance().getCache();
+        	
+	    	if (cache.containsKey(accessToken)) {
+	    		email = (String) cache.get(accessToken);
+	    
+	    		DatastoreService datastore = DatastoreServiceFactory
+	    				.getDatastoreService();
 
-		Filter emailFilter = new FilterPredicate(UserManager.PROP_EMAIL, FilterOperator.EQUAL, username);
-			
-		Query query = new Query(UserManager.USER_KIND).setFilter(emailFilter);
-		Entity userEntity = datastore.prepare(query).asSingleEntity();
-		
-		if (userEntity != null) {			
-			if (password.equals(userEntity.getProperty(UserManager.PROP_PASSWORD)) && 
-					roles.contains(userEntity.getProperty(UserManager.PROP_ROLE))) {
-				
-				final User user = updateUserLogin(datastore, userEntity);
-				
-			    requestContext.setSecurityContext(new SecurityContext() {
-					
-					@Override
-					public boolean isUserInRole(String role) {
-						return role.equals(user.getRole());
-					}
-					
-					@Override
-					public boolean isSecure() {
-						return true;
-					}
-					
-					@Override
-					public Principal getUserPrincipal() {
-						return user;
-					}
-					
-					@Override
-					public String getAuthenticationScheme() {
-						return SecurityContext.BASIC_AUTH;
-					}
-				});
-				
-				isUserAllowed = true;
-			}
-		}
+	    		Filter emailFilter = new FilterPredicate(UserManager.PROP_EMAIL, FilterOperator.EQUAL, email);
+	    			
+	    		Query query = new Query(UserManager.USER_KIND).setFilter(emailFilter);
+	    		Entity userEntity = datastore.prepare(query).asSingleEntity();
+	    		
+	    		if (userEntity != null) {			
+	    			if (roles.contains(userEntity.getProperty(UserManager.PROP_ROLE))) {
+	    				
+	    				final User user = updateUserLogin(datastore, userEntity);
+	    				
+	    			    requestContext.setSecurityContext(new SecurityContext() {
+	    					
+	    					@Override
+	    					public boolean isUserInRole(String role) {
+	    						return role.equals(user.getRole());
+	    					}
+	    					
+	    					@Override
+	    					public boolean isSecure() {
+	    						return true;
+	    					}
+	    					
+	    					@Override
+	    					public Principal getUserPrincipal() {
+	    						return user;
+	    					}
+	    					
+	    					@Override
+	    					public String getAuthenticationScheme() {
+	    						return SecurityContext.BASIC_AUTH;
+	    					}
+	    				});
+	    				
+	    				isUserAllowed = true;
+	    			}
+	    		}	    		
+	    	}
+        } catch (CacheException e) {
+        }       
 		
 		return isUserAllowed;
 	}
-	
-	private String[] decode(String auth) {		
-		auth = auth.replaceFirst("[B|b]asic ", "");
-
-		byte[] decodedBytes = DatatypeConverter.parseBase64Binary(auth);
-
-		if (decodedBytes == null || decodedBytes.length == 0) {
-			return null;
-		}
-
-		return new String(decodedBytes).split(":", 2);
-	}
-	
+		
 	@SuppressWarnings("unchecked")
 	private User updateUserLogin (DatastoreService datastore, Entity userEntity) {
 		User user = new User();
@@ -143,11 +131,9 @@ public class AuthFilter implements ContainerRequestFilter {
 		
 		String email = (String) userEntity.getProperty(UserManager.PROP_EMAIL);
 		
-		Cache cache;
         try {
-            CacheFactory cacheFactory = CacheManager.getInstance().getCacheFactory();
-            cache = cacheFactory.createCache(Collections.emptyMap());
-
+        	Cache cache = TokenCacheManager.getInstance().getCache();
+        	
 	    	if (cache.containsKey(email)) {
 	    		Date lastLogin = (Date)cache.get(email);
 	    		if ((Calendar.getInstance().getTime().getTime() - lastLogin.getTime()) < 30000) {
@@ -161,7 +147,7 @@ public class AuthFilter implements ContainerRequestFilter {
 	    	}
         } catch (CacheException e) {
         	canUseCache = false;        	
-        }		
+        }	
         
         user.setEmail((String) userEntity.getProperty(UserManager.PROP_EMAIL));
         user.setPassword((String) userEntity.getProperty(UserManager.PROP_PASSWORD));

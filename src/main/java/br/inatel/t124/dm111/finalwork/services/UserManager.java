@@ -1,6 +1,7 @@
 package br.inatel.t124.dm111.finalwork.services;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -133,6 +134,15 @@ public class UserManager {
 				Key userKey = KeyFactory.createKey(USER_KIND, "userKey");
 				Entity userEntity = new Entity(USER_KIND, userKey);
 
+				if (user.getRole() == null) {
+					user.setRole("USER");
+				}
+				
+				user.setLastUpdate(Calendar.getInstance().getTime());
+				if (user.getGcmRegId() != null && user.getLastGCMRegister() == null) {
+					userEntity.setProperty(PROP_LAST_GCM_REGISTER,	Calendar.getInstance().getTime());
+				}
+				
 				userToEntity(user, userEntity);
 
 				datastore.put(userEntity);
@@ -155,17 +165,22 @@ public class UserManager {
 	@Path("/{email}")
 	@RolesAllowed({"ADMIN", "USER"})
 	public User update(@PathParam("email") String email, @Valid User user) {
-		if (user.getId() != 0) {
+//		if (user.getId() != 0) {
 
 			if (securityContext.getUserPrincipal().getName().equals(email) || securityContext.isUserInRole("ADMIN")) {
 				Entity userEntity = getByEmail(user.getEmail());
 				if (userEntity != null) {
-					if (!userEntity.getProperty(PROP_EMAIL).equals(email)) {
+					if (userEntity.getProperty(PROP_EMAIL).equals(email)) {
 
 						Entity cpfUserEntity = getByCPF(user.getCpf());
-						if (cpfUserEntity == null || cpfUserEntity.getProperty(PROP_CPF).equals(user.getCpf())) {
+						if (cpfUserEntity == null || !cpfUserEntity.getProperty(PROP_CPF).equals(user.getCpf())) {
 
 							DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+							
+							user.setLastUpdate(Calendar.getInstance().getTime());
+							if (user.getGcmRegId() != null && user.getLastGCMRegister() == null) {
+								userEntity.setProperty(PROP_LAST_GCM_REGISTER,	Calendar.getInstance().getTime());
+							}
 
 							userToEntity(user, userEntity);
 
@@ -190,9 +205,9 @@ public class UserManager {
 			} else {
 				throw new WebApplicationException(Status.FORBIDDEN);
 			}
-		} else {
-			throw new WebApplicationException("The user Id must be informed.", Status.BAD_REQUEST);
-		}
+//		} else {
+//			throw new WebApplicationException("The user Id must be informed.", Status.BAD_REQUEST);
+//		}
 	}
 	
 	@DELETE
